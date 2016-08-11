@@ -1,30 +1,58 @@
-package com.ankitb.rxtesting;
+package com.ankitb.rxtesting.view;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import java.util.Arrays;
+
+import com.ankitb.rxtesting.R;
+import com.ankitb.rxtesting.RepositoryAdapter;
+import com.ankitb.rxtesting.network.Repository;
+
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import rx.Observable;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements IView {
     private static final String TAG = "RxTesting";
-    TextView mTextView;
+    private MainPresenterImpl presenter;
+
+    @BindView(R.id.repos_recycler_view)
+    private RecyclerView recyclerView;
+
+    @BindView(R.id.toolbar)
+    private Toolbar toolbar;
+
+    @BindView(R.id.edit_text_username)
+    private EditText editTextUsername;
+
+    @OnClick(R.id.button_search)
+    private void onSearchClick(){
+        presenter.onSearchClick(editTextUsername.getText().toString());
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        presenter = new MainPresenterImpl(this);
         setContentView(R.layout.activity_main);
-        mTextView = (TextView) findViewById(R.id.text_view);
+
+        ButterKnife.bind(this);
+        setSupportActionBar(toolbar);
+        setupRecyclerView(recyclerView);
 
         /*Observable<String> myObservable = Observable.create(new Observable.OnSubscribe<String>() {
             @Override
@@ -83,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         Observable.from("Text1","Text2","Text3").subscribe(s -> printText((String)s));*/
 
 
-        Observable.OnSubscribe observableAction = new Observable.OnSubscribe<String>() {
+       /* Observable.OnSubscribe observableAction = new Observable.OnSubscribe<String>() {
             public void call(Subscriber<? super String> subscriber) {
                 subscriber.onNext("Hello World !");
                 subscriber.onCompleted();
@@ -132,8 +160,20 @@ public class MainActivity extends AppCompatActivity {
                 .observeOn(AndroidSchedulers.mainThread())
                 .flatMap(getStrings)
                 .reduce(mergeStrings)
-                .subscribe(toastOnNextAction);
+                .subscribe(toastOnNextAction);*/
 
+    }
+
+    private void setupRecyclerView(RecyclerView recyclerView) {
+        RepositoryAdapter adapter = new RepositoryAdapter();
+        adapter.setCallback(new RepositoryAdapter.Callback() {
+            @Override
+            public void onItemClick(Repository repository) {
+                //startActivity(RepositoryActivity.newIntent(MainActivity.this, repository));
+            }
+        });
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     Func1<List<String>, Observable<String >> getStrings = new Func1<List<String>, Observable<String>>() {
@@ -187,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNext(String s) {
                 Log.d(TAG,"Text: onNext : " + s);
-                mTextView.setText(s);
+                //mTextView.setText(s);
             }
         };
     }
@@ -197,4 +237,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void showProgressDialog(String message) {
+
+    }
+
+    @Override
+    public void cancelProgressDialog() {
+
+    }
 }
